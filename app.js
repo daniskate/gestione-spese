@@ -1,13 +1,22 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
+
   apiKey: "AIzaSyDz8CC9KMrQTx_PGgONd4kebhes4b-cQcs",
+
   authDomain: "gestionespese-21c91.firebaseapp.com",
+
   databaseURL: "https://gestionespese-21c91-default-rtdb.europe-west1.firebasedatabase.app",
+
   projectId: "gestionespese-21c91",
+
   storageBucket: "gestionespese-21c91.firebasestorage.app",
+
   messagingSenderId: "801958654193",
+
   appId: "1:801958654193:web:8cbc2a4350e8a253dcf950"
+
 };
+
 
 // Initialize Firebase
 let database = null;
