@@ -178,7 +178,6 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
     
     if (currentMode === 'shared' && groupId && firebaseInitialized) {
         await database.ref(`groups/${groupId}/expenses/${expense.id}`).set(expense);
-        await sendNotification(expense);
     }
     
     document.getElementById('expense-form').reset();
@@ -704,8 +703,6 @@ async function createGroup() {
     document.getElementById('share-link').textContent = url;
     document.getElementById('share-link-container').style.display = 'block';
     startListening();
-    listenNotifications();
-    promptNotifications();
     showNotification('Gruppo creato! ✅');
 }
 
@@ -736,15 +733,10 @@ async function checkUrlForGroup() {
         currentMode = 'shared';
         document.querySelectorAll('.mode-btn')[1].click();
         startListening();
-        listenNotifications();
-        promptNotifications();
         showNotification('Gruppo connesso! 🎉');
     } else {
         groupId = localStorage.getItem('groupId');
-        if (groupId && currentMode === 'shared') {
-            startListening();
-            listenNotifications();
-        }
+        if (groupId && currentMode === 'shared') startListening();
     }
 }
 
@@ -849,83 +841,3 @@ function showNotification(message) {
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
-
-// ============================================
-// NOTIFICHE PUSH (Sistema Semplificato)
-// ============================================
-
-function getDeviceId() {
-    let id = localStorage.getItem('deviceId');
-    if (!id) {
-        id = 'dev_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('deviceId', id);
-    }
-    return id;
-}
-
-async function requestNotifications() {
-    if (!('Notification' in window)) {
-        showNotification('Browser non supporta notifiche');
-        return false;
-    }
-    
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-        showNotification('Notifiche attivate! 🔔');
-        return true;
-    }
-    return false;
-}
-
-async function sendNotification(expense) {
-    if (!groupId || !firebaseInitialized) return;
-    
-    try {
-        const myDevice = getDeviceId();
-        const person = expense.paidBy === 'person1' 
-            ? localStorage.getItem('person1Name') || 'Persona 1'
-            : localStorage.getItem('person2Name') || 'Persona 2';
-        
-        await database.ref(`groups/${groupId}/notifications`).push({
-            title: '💰 Nuova Spesa',
-            body: `${person}: €${expense.amount.toFixed(2)} - ${expense.description}`,
-            from: myDevice,
-            time: Date.now()
-        });
-    } catch(e) {
-        console.log('Errore notifica:', e);
-    }
-}
-
-function listenNotifications() {
-    if (!groupId || !firebaseInitialized) return;
-    
-    const myDevice = getDeviceId();
-    
-    database.ref(`groups/${groupId}/notifications`).on('child_added', async (snap) => {
-        const notif = snap.val();
-        if (notif.from === myDevice) return;
-        if (Date.now() - notif.time > 60000) return;
-        
-        if (Notification.permission === 'granted') {
-            new Notification(notif.title, {
-                body: notif.body,
-                icon: '/icon-192.png',
-                vibrate: [200, 100, 200]
-            });
-        }
-        
-        await snap.ref.remove();
-    });
-}
-
-function promptNotifications() {
-    if (Notification.permission === 'default') {
-        setTimeout(() => {
-            if (confirm('Vuoi ricevere notifiche quando l\'altra persona aggiunge una spesa?')) {
-                requestNotifications();
-            }
-        }, 2000);
-    }
-}
-

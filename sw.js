@@ -33,25 +33,3 @@ self.addEventListener('activate', event => {
     })
   );
 });
-
-// Gestione notifiche push
-self.addEventListener('push', event => {
-  let data = { title: '💰 Nuova Spesa', body: 'Una spesa è stata aggiunta' };
-  if (event.data) {
-    try { data = event.data.json(); } catch(e) {}
-  }
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/icon-192.png',
-      vibrate: [200, 100, 200],
-      tag: 'expense'
-    })
-  );
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  event.waitUntil(clients.openWindow('/'));
-});
