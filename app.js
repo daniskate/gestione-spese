@@ -1,12 +1,12 @@
-// Firebase Configuration
+// Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBvw8F_JKxJ8N3g6YxJ4uKVXZZ8HGvvGGE",
-    authDomain: "gestione-spese-demo.firebaseapp.com",
-    databaseURL: "https://gestione-spese-demo-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "gestione-spese-demo",
-    storageBucket: "gestione-spese-demo.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890abcdef"
+  apiKey: "AIzaSyDz8CC9KMrQTx_PGgONd4kebhes4b-cQcs",
+  authDomain: "gestionespese-21c91.firebaseapp.com",
+  databaseURL: "https://gestionespese-21c91-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "gestionespese-21c91",
+  storageBucket: "gestionespese-21c91.firebasestorage.app",
+  messagingSenderId: "801958654193",
+  appId: "1:801958654193:web:8cbc2a4350e8a253dcf950"
 };
 
 // Initialize Firebase
