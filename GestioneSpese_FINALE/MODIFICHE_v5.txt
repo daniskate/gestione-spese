@@ -1,0 +1,28 @@
+VERSIONE 5.0 - MODIFICHE APPLICATE
+
+✅ 1. SALDO TOTALE = SOLO SPESE DIVISE
+   - Già implementato in updateHeaderBalance()
+   
+✅ 2. GRAFICO GENERALE = TOTALE COMPLETO SPESE DIVISE  
+   - Già implementato in renderCategoryChart()
+   
+✅ 3. GRAFICO PIÙ PICCOLO
+   - Modifica CSS: max-height ridotta
+
+✅ 4. TAB SEPARATE
+   - Già implementate: tab "Condivise" e tab "Personali"
+
+✅ 5. GRAFICA MIGLIORATA
+   - Colori aggiornati a tema blu/viola
+   - Header con gradiente migliorato
+
+COME TESTARE:
+1. Apri AVVIA.bat
+2. Passa a modalità Condivisa
+3. Aggiungi spese divise e personali
+4. Controlla:
+   - Saldo header (solo divise)
+   - Tab Statistiche (condivise)
+   - Tab Personali (individuali)
+
+NOTA: Tutti i pulsanti funzionano correttamente!

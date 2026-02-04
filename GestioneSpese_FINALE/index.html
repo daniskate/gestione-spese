@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>💰 Budget e Finanze</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F5F5F5;
+            min-height: 100vh;
+            color: #212121;
+        }
+
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #F5F5F5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+            color: white;
+            padding: 20px 20px 25px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        .balance-display {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.15);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #4CAF50;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 15px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: #212121;
+            margin: 20px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .category-btn {
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 16px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-btn:active {
+            transform: scale(0.95);
+        }
+
+        .category-btn.selected {
+            border-color: #4CAF50;
+            background: #E8F5E9;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.2);
+        }
+
+        .category-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #424242;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #616161;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #FAFAFA;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: white;
+        }
+
+        /* Toggle Switch */
+        .split-toggle-container {
+            background: #F5F5F5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .split-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .split-label-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .split-icon {
+            font-size: 24px;
+        }
+
+        .split-text-group h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #212121;
+            margin-bottom: 2px;
+        }
+
+        .split-text-group p {
+            font-size: 12px;
+            color: #757575;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #BDBDBD;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #607D8B;
+            box-shadow: 0 2px 8px rgba(96,125,139,0.3);
+        }
+
+        /* Expense List */
+        .expense-item {
+            background: white;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .expense-icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .expense-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .expense-description {
+            font-size: 15px;
+            font-weight: 600;
+            color: #212121;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .expense-meta {
+            font-size: 12px;
+            color: #757575;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .split-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .split-badge.shared {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .split-badge.personal {
+            background: #FCE4EC;
+            color: #C2185B;
+        }
+
+        .expense-amount-box {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .expense-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #F44336;
+        }
+
+        .delete-btn {
+            padding: 6px 10px;
+            background: #F44336;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #757575;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Personal Stats */
+        .personal-stats-section {
+            margin-bottom: 20px;
+        }
+
+        .personal-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .personal-stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .person-stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .person-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #F5F5F5;
+        }
+
+        .person-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .person-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #212121;
+            margin-bottom: 2px;
+        }
+
+        .person-info p {
+            font-size: 11px;
+            color: #757575;
+        }
+
+        .person-total {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .person-total-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .person-total-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .breakdown-item {
+            background: #F5F5F5;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .breakdown-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #212121;
+            margin-bottom: 3px;
+        }
+
+        .breakdown-label {
+            font-size: 10px;
+            color: #757575;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .person-chart-container {
+            margin-top: 12px;
+        }
+
+        .person-chart-wrapper {
+            background: #FAFAFA;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .person-chart-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #212121;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper canvas {
+            max-height: 180px !important;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #212121;
+            margin-bottom: 15px;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(33,150,243,0.3);
+        }
+
+        .balance-emoji {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .balance-message {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .balance-breakdown {
+            font-size: 13px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px 0;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #9E9E9E;
+            transition: all 0.2s;
+            padding: 6px;
+        }
+
+        .nav-item.active {
+            color: #4CAF50;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            opacity: 0.3;
+            margin-bottom: 15px;
+        }
+
+        .empty-text {
+            font-size: 15px;
+            color: #9E9E9E;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #212121;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Color Picker */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-option.selected {
+            border-color: #212121;
+            transform: scale(1.1);
+        }
+
+        /* Icon Selector */
+        .icon-selector-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            background: #F5F5F5;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .icon-tab {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #757575;
+            transition: all 0.2s;
+        }
+
+        .icon-tab.active {
+            background: white;
+            color: #4CAF50;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .icon-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .icon-preset-item {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: #F5F5F5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .icon-preset-item:hover {
+            background: #E8F5E9;
+            transform: scale(1.1);
+        }
+
+        .icon-preset-item.selected {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+        }
+
+        /* Notification */
+        .notification-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideDown 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 0); opacity: 1; }
+            to { transform: translate(-50%, -100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="header-top">
+                <div class="header-title">
+                    <div class="app-logo">💰</div>
+                    <div>
+                        <h1>Budget e Finanze</h1>
+                        <div class="header-subtitle">Gestione Spese</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="balance-display">
+                <div class="balance-label">Saldo Totale</div>
+                <div class="balance-amount" id="header-balance">€0.00</div>
+            </div>
+
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="switchMode('personal')">
+                    👤 Personale
+                </button>
+                <button class="mode-btn" onclick="switchMode('shared')">
+                    👥 Condivisa
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Add Tab -->
+            <div id="add-tab" class="tab-content active">
+                <div class="section-header">📝 Nuova Spesa</div>
+                
+                <div class="form-card">
+                    <form id="expense-form">
+                        <div class="form-group">
+                            <label class="form-label">Descrizione</label>
+                            <input type="text" class="form-input" id="description" placeholder="Es. Spesa al supermercato" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Importo (€)</label>
+                            <input type="number" class="form-input" id="amount" step="0.01" placeholder="0.00" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" class="form-input" id="date" required>
+                        </div>
+
+                        <div id="shared-options" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Pagato da</label>
+                                <select class="form-input" id="paidBy">
+                                    <option value="person1">Persona 1</option>
+                                    <option value="person2">Persona 2</option>
+                                </select>
+                            </div>
+
+                            <div class="split-toggle-container">
+                                <div class="split-toggle-row">
+                                    <div class="split-label-group">
+                                        <span class="split-icon" id="split-icon">💰</span>
+                                        <div class="split-text-group">
+                                            <h4 id="split-title">Spesa Divisa</h4>
+                                            <p id="split-desc">Costo diviso a metà</p>
+                                        </div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="isSplit" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="paid-for-container" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label">Pagato per</label>
+                                    <select class="form-input" id="paidFor">
+                                        <option value="person1">Persona 1</option>
+                                        <option value="person2">Persona 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-header">🏷️ Seleziona Categoria</div>
+                        <div class="category-grid" id="category-grid"></div>
+
+                        <button type="submit" class="btn">Aggiungi Spesa</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- List Tab -->
+            <div id="list-tab" class="tab-content">
+                <div class="section-header">📋 Elenco Spese</div>
+                <div id="expense-list"></div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content">
+                <div id="balance-section"></div>
+
+                <div class="section-header">📊 Spese Condivise</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-expenses">€0</div>
+                        <div class="stat-label">Totale Condivise</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="count-expenses">0</div>
+                        <div class="stat-label">N° Condivise</div>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title">
+                        <span id="chart-general-title">Categorie Condivise</span>
+                    </div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Personal Stats Tab -->
+            <div id="personal-tab" class="tab-content">
+                <div class="section-header">👤 Statistiche Personali</div>
+                <div id="personal-stats-section"></div>
+            </div>
+
+            <!-- Categories Tab -->
+            <div id="categories-tab" class="tab-content">
+                <div class="section-header">🎨 Gestisci Categorie</div>
+                <div class="form-card">
+                    <button class="btn" onclick="showAddCategoryModal()">
+                        ➕ Aggiungi Categoria
+                    </button>
+                    <div id="custom-categories-list" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content">
+                <div id="shared-settings" style="display: none;">
+                    <div class="section-header">⚙️ Impostazioni Condivisione</div>
+                    <div class="form-card">
+                        <div class="form-group">
+                            <label class="form-label">Nome Persona 1</label>
+                            <input type="text" class="form-input" id="person1-name" placeholder="Il tuo nome">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nome Persona 2</label>
+                            <input type="text" class="form-input" id="person2-name" placeholder="Nome altra persona">
+                        </div>
+                        <button class="btn" onclick="saveNames()">Salva Nomi</button>
+                    </div>
+
+                    <div class="form-card" style="margin-top: 15px;">
+                        <div class="section-header" style="margin-top: 0;">🔗 Condividi</div>
+                        <button class="btn btn-secondary" onclick="createGroup()">Crea Gruppo</button>
+                        <div id="share-link-container" style="display: none; margin-top: 15px;">
+                            <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; word-break: break-all; font-size: 12px; margin-bottom: 10px;" id="share-link"></div>
+                            <button class="btn" onclick="copyLink()">📋 Copia Link</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">💾 Gestione Dati</div>
+                <div class="form-card">
+                    <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 10px;">
+                        📥 Esporta Dati
+                    </button>
+                    <button class="btn" onclick="clearAllData()" style="background: #F44336; box-shadow: 0 2px 8px rgba(244,67,54,0.3);">
+                        🗑️ Cancella Tutti i Dati
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('add')">
+                <div class="nav-icon">➕</div>
+                <div class="nav-label">Aggiungi</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('list')">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Elenco</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('stats')">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Condivise</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('personal')" id="personal-nav-btn" style="display:none;">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Personali</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('categories')">
+                <div class="nav-icon">🎨</div>
+                <div class="nav-label">Categorie</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('settings')">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Altro</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal" id="add-category-modal">
+        <div class="modal-content">
+            <div class="modal-header">Nuova Categoria</div>
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <input type="text" class="form-input" id="new-category-name" placeholder="Es. Sport">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Icona</label>
+                <div class="icon-selector-tabs">
+                    <button type="button" class="icon-tab active" onclick="switchIconTab('preset')">Predefinite</button>
+                    <button type="button" class="icon-tab" onclick="switchIconTab('custom')">Personalizzata</button>
+                </div>
+                
+                <div id="preset-icons" class="icon-preset-grid">
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🍕')">🍕</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🍔')">🍔</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('☕')">☕</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🍷')">🍷</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🚗')">🚗</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🚕')">🚕</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🚌')">🚌</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('✈️')">✈️</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🏠')">🏠</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💡')">💡</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🔌')">🔌</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🛠️')">🛠️</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💊')">💊</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🏥')">🏥</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💉')">💉</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🩺')">🩺</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🎮')">🎮</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🎬')">🎬</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🎵')">🎵</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('📚')">📚</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🛍️')">🛍️</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('👕')">👕</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('👗')">👗</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💄')">💄</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💼')">💼</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('📱')">📱</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💻')">💻</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🎓')">🎓</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('⚽')">⚽</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🏋️')">🏋️</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🏃')">🏃</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🚴')">🚴</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🐕')">🐕</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🐈')">🐈</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('🎁')">🎁</div>
+                    <div class="icon-preset-item" onclick="selectPresetIcon('💐')">💐</div>
+                </div>
+                
+                <div id="custom-icon" style="display: none;">
+                    <input type="text" class="form-input" id="new-category-icon" placeholder="Inserisci emoji" maxlength="2">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Colore</label>
+                <div class="color-grid">
+                    <div class="color-option selected" data-color="#F44336" style="background: #F44336;"></div>
+                    <div class="color-option" data-color="#2196F3" style="background: #2196F3;"></div>
+                    <div class="color-option" data-color="#4CAF50" style="background: #4CAF50;"></div>
+                    <div class="color-option" data-color="#FF9800" style="background: #FF9800;"></div>
+                    <div class="color-option" data-color="#9C27B0" style="background: #9C27B0;"></div>
+                    <div class="color-option" data-color="#795548" style="background: #795548;"></div>
+                    <div class="color-option" data-color="#607D8B" style="background: #607D8B;"></div>
+                    <div class="color-option" data-color="#E91E63" style="background: #E91E63;"></div>
+                    <div class="color-option" data-color="#00BCD4" style="background: #00BCD4;"></div>
+                    <div class="color-option" data-color="#FFC107" style="background: #FFC107;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddCategoryModal()" style="flex: 1;">Annulla</button>
+                <button class="btn" onclick="addCustomCategory()" style="flex: 1;">Aggiungi</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
